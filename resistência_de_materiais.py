@@ -1,8 +1,9 @@
+import math
+
 class viga:
     def __init__ (self, comprimento, tipo_apoio="biapoiada"):
         self.Comprimento = comprimento
         self.tipo_apoio = tipo_apoio
-        self.apoios = []
         self.cargas = []
         self.reacoes = {"Ra": 0, "Rb": 0, "Ma": 0}
         self.posA = 0.0
@@ -21,14 +22,22 @@ class viga:
             if isinstance(c, CarregamentoConcentrado):
                 F = c.Forca
                 X = c.Posicao
+                somaFy += F
+                somaM += F * (X - posA)
+                
             elif isinstance(c, CarregamentoDistribuido):
                 largura = c.PosicaoF - c.PosicaoI
                 F = (c.ForcaI + c.ForcaF) * largura / 2
-                centroide_local = (largura * (c.ForcaI + 2 * c.ForcaF) / (3 * (c.ForcaI + c.ForcaF)))
+                if (c.ForcaI + c.ForcaF) != 0:
+                    centroide_local = (largura * (c.ForcaI + 2 * c.ForcaF) / (3 * (c.ForcaI + c.ForcaF)))
+                else:
+                    centroide_local = largura / 2
                 X = c.PosicaoI + centroide_local
-            
-            somaFy += F
-            somaM += F * (X - posA)
+                somaFy += F
+                somaM += F * (X - posA)
+
+            elif isinstance(c, MomentoConcentrado):
+                somaM += c.Magnitude
 
         if self.tipo_apoio == "biapoiada":
             dist_apoios = posB - posA
@@ -56,7 +65,7 @@ class viga:
             if X >= self.posA:
                 V += self.reacoes["Ra"]
                 M += self.reacoes["Ra"] * (X - self.posA)
-            if X >= self.posB:
+            if X >= self.posB and self.tipo_apoio == "biapoiada":
                 V += self.reacoes["Rb"]
                 M += self.reacoes["Rb"] * (X - self.posB)
             
@@ -69,18 +78,24 @@ class viga:
                         V -= c.Forca
                         M -= c.Forca * (X - c.Posicao)
                 
+                elif isinstance(c, MomentoConcentrado): 
+                    if X >= c.Posicao:
+                        M -= c.Magnitude
+
                 elif isinstance(c, CarregamentoDistribuido):
                     if X > c.PosicaoI:
                         X_fim = min(X, c.PosicaoF)
                         largura_ativa = X_fim - c.PosicaoI
                         
-                        q_atual = c.ForcaI + (c.ForcaF - c.ForcaI) * (largura_ativa / (c.PosicaoF - c.PosicaoI))
+                        taxa = (c.ForcaF - c.ForcaI) / (c.PosicaoF - c.PosicaoI)
+                        q_atual = c.ForcaI + taxa * largura_ativa
+                        
                         forca_acumulada = (c.ForcaI + q_atual) * largura_ativa / 2
                         
-                        if forca_acumulada != 0:
+                        if (c.ForcaI + q_atual) != 0:
                             centroide = (largura_ativa * (c.ForcaI + 2 * q_atual)) / (3 * (c.ForcaI + q_atual))
                         else:
-                            centroide = 0
+                            centroide = largura_ativa / 2
                             
                         braco_alavanca = X - (c.PosicaoI + centroide)
                         
@@ -105,21 +120,27 @@ class CarregamentoDistribuido:
         self.PosicaoI = posicaoI
         self.PosicaoF = posicaoF
 
+class MomentoConcentrado:
+    def __init__(self, magnitude, posicao):
+        self.Magnitude = magnitude
+        self.Posicao = posicao
+
 minha_viga = viga(6.0, tipo_apoio="biapoiada")
 
 minha_viga.add_carga(CarregamentoDistribuido(0.0, 3.0, 0.0, 2.0))
-minha_viga.add_carga(CarregamentoDistribuido(3.0, 3.0, 4.0, 6.0))
+minha_viga.add_carga(MomentoConcentrado(5.0, 3.0))
+minha_viga.add_carga(CarregamentoConcentrado(10.0, 4.0))
 
 minha_viga.calcular_reacoes(2.0, 6.0)
 
-print(f"Reações:")
+print(f"--- Reações de Apoio ---")
 print(f"Ra: {minha_viga.reacoes['Ra']:.2f} kN")
-print(f"Rb: {minha_viga.reacoes['Rb']:.2f} kN\n")
+print(f"Rb: {minha_viga.reacoes['Rb']:.2f} kN")
+if minha_viga.tipo_apoio == "engastada":
+    print(f"Ma: {minha_viga.reacoes['Ma']:.2f} kN.m")
 
-X, V, M = minha_viga.calcular_esforcos_internos(passo=0.01)
+X, V, M = minha_viga.calcular_esforcos_internos()
 
-print("Esforços Internos:")
-print(f"Força Cortante Máxima (+): {max(V):.2f} kN")
-print(f"Força Cortante Mínima (-): {min(V):.2f} kN")
-print(f"Momento Fletor Máximo (+): {max(M):.2f} kN.m")
-print(f"Momento Fletor Mínimo (-): {min(M):.2f} kN.m")
+print(f"\n--- Esforços Máximos [cite: 90, 91] ---")
+print(f"V max: {max(V):.2f} kN | V min: {min(V):.2f} kN")
+print(f"M max: {max(M):.2f} kN.m | M min: {min(M):.2f} kN.m")
