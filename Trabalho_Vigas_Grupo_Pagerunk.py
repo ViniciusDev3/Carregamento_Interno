@@ -5,6 +5,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 
 # LÓGICA DE CÁLCULO
+
 class viga:
     def __init__ (self, comprimento, tipo_apoio="biapoiada"):
         self.Comprimento = comprimento
@@ -82,6 +83,7 @@ class MomentoConcentrado:
     def __str__(self): return f"Mom: {self.Magnitude}kNm @ {self.Posicao}m"
 
 # INTERFACE GRÁFICA
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
