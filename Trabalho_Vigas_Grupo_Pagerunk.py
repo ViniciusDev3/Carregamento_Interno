@@ -7,7 +7,6 @@ from PIL import Image
 import numpy as np
 
 # =========================== LÓGICA DE CÁLCULO ===========================
-# A MÁQUINA MATEMÁTICA CONTINUA INTACTA COMO VOCÊ PEDIU
 
 class Viga:
     def __init__(self, comprimento, tipo_apoio="biapoiada"):
@@ -249,7 +248,6 @@ class App(ctk.CTk):
         self.btn_avancar.pack_forget()
         self.btn_voltar.pack(side="right", padx=5)
         
-        # ---> CORREÇÃO VISUAL 1: Apaga os textos fantasmas de Cortante/Momento ao visualizar o esquema
         self.lbl_cortante.configure(text="")
         self.lbl_momento.configure(text="")
         
@@ -279,14 +277,12 @@ class App(ctk.CTk):
         ax.plot([0, L], [0, 0], color='white', linewidth=6)
         ax.text(L/2, -0.15, f"L = {L} m", color='white', ha='center', fontsize=10, fontweight='bold')
         
-        # ---> CORREÇÃO VISUAL 2: O triângulo amarelo só é desenhado se for Biapoiada!
         if self.tipo_var.get() == "biapoiada":
             ax.plot(posA, -0.05, '^', color='yellow', markersize=15)
             ax.text(posA, -0.25, f"A ({posA}m)", color='yellow', ha='center', fontsize=9)
             ax.plot(posB, -0.05, '^', color='yellow', markersize=15)
             ax.text(posB, -0.25, f"B ({posB}m)", color='yellow', ha='center', fontsize=9)
         else:
-            # ENGASTADA: Desenha um bloco de engaste (parede) bem visível em cinza claro!
             ax.add_patch(Rectangle((posA-0.15, -0.3), 0.15, 0.6, color='#bdc3c7', zorder=3))
             for i in range(7):
                 y_hatch = -0.3 + i*0.1
@@ -336,7 +332,6 @@ class App(ctk.CTk):
         viga.calcular_reacoes(posA, posB)
         x, V, M = viga.calcular_esforcos_internos(passo=0.01)
 
-        # ---> CORREÇÃO VISUAL 3: Omitir o "Rb: 0.00 kN" se for Engastada
         if viga.tipo_apoio == "engastada":
             res_text = f"Ra: {viga.reacoes['Ra']:.2f} kN | Ma: {viga.reacoes['Ma']:.2f} kNm"
         else:
