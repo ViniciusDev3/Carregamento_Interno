@@ -245,8 +245,8 @@ class App(ctk.CTk):
 
     def desenhar_esquema(self):
         self.lbl_resultado.configure(text="Esquema de Montagem")
-        self.btn_avancar.pack_forget()
-        self.btn_voltar.pack(side="right", padx=5)
+        self.btn_voltar.pack_forget()
+        self.btn_avancar.pack(side="right", padx=5)
         
         self.lbl_cortante.configure(text="")
         self.lbl_momento.configure(text="")
@@ -308,8 +308,8 @@ class App(ctk.CTk):
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def executar(self):
-        self.btn_voltar.pack_forget()
-        self.btn_avancar.pack(side="right", padx=5)
+        self.btn_avancar.pack_forget()
+        self.btn_voltar.pack(side="right", padx=5)  
         try:
             L = float(self.entry_comprimento.get())
             if L <= 0: raise ValueError("Comprimento deve ser > 0")
